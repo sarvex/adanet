@@ -96,9 +96,9 @@ class ReportMaterializer(object):
     # the second element is an update op. We collate the update ops here.
     metric_update_ops = []
     for subnetwork_report in subnetwork_reports.values():
-      for metric_tuple in subnetwork_report.metrics.values():
-        metric_update_ops.append(tf_compat.metric_op(metric_tuple)[1])
-
+      metric_update_ops.extend(
+          tf_compat.metric_op(metric_tuple)[1]
+          for metric_tuple in subnetwork_report.metrics.values())
     # Extract the Tensors to be materialized.
     tensors_to_materialize = {}
     for name, subnetwork_report in subnetwork_reports.items():

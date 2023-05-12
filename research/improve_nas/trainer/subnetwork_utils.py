@@ -66,8 +66,7 @@ def copy_update(hparams, **kwargs):
   values = hparams.values()
   values.update(kwargs)
   values = copy.deepcopy(values)
-  hp = tf.contrib.training.HParams(**values)
-  return hp
+  return tf.contrib.training.HParams(**values)
 
 
 def get_persisted_value_from_ensemble(ensemble, key):
@@ -81,5 +80,4 @@ def get_persisted_value_from_ensemble(ensemble, key):
     int|float value of the constant.
   """
   previous_subnetwork = ensemble.weighted_subnetworks[-1].subnetwork
-  persisted_tensor = previous_subnetwork.shared[key]
-  return persisted_tensor
+  return previous_subnetwork.shared[key]

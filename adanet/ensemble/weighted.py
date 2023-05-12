@@ -35,9 +35,7 @@ def _stringify(key):
 
 
 def _lookup_if_dict(target, key):
-  if isinstance(target, dict):
-    return target[key]
-  return target
+  return target[key] if isinstance(target, dict) else target
 
 
 class WeightedSubnetwork(
@@ -229,10 +227,9 @@ class ComplexityRegularizedEnsembler(Ensembler):
                adanet_beta=0.,
                use_bias=False,
                name=None):
-    if warm_start_mixture_weights:
-      if model_dir is None:
-        raise ValueError("model_dir cannot be None when "
-                         "warm_start_mixture_weights is True.")
+    if warm_start_mixture_weights and model_dir is None:
+      raise ValueError("model_dir cannot be None when "
+                       "warm_start_mixture_weights is True.")
 
     self._optimizer = optimizer
     self._mixture_weight_type = mixture_weight_type
@@ -246,9 +243,7 @@ class ComplexityRegularizedEnsembler(Ensembler):
 
   @property
   def name(self):
-    if self._name:
-      return self._name
-    return "complexity_regularized"
+    return self._name if self._name else "complexity_regularized"
 
   def build_ensemble(self,
                      subnetworks,
@@ -283,8 +278,7 @@ class ComplexityRegularizedEnsembler(Ensembler):
           else:
             weight_initializer = self._load_variable(
                 weighted_subnetwork.weight, previous_iteration_checkpoint)
-        with tf_compat.v1.variable_scope(
-            "weighted_subnetwork_{}".format(subnetwork_index)):
+        with tf_compat.v1.variable_scope(f"weighted_subnetwork_{subnetwork_index}"):
           weighted_subnetworks.append(
               self._build_weighted_subnetwork(
                   weighted_subnetwork.subnetwork,
@@ -293,8 +287,7 @@ class ComplexityRegularizedEnsembler(Ensembler):
         subnetwork_index += 1
 
     for subnetwork in subnetworks:
-      with tf_compat.v1.variable_scope(
-          "weighted_subnetwork_{}".format(subnetwork_index)):
+      with tf_compat.v1.variable_scope(f"weighted_subnetwork_{subnetwork_index}"):
         weighted_subnetworks.append(
             self._build_weighted_subnetwork(subnetwork, num_subnetworks))
       subnetwork_index += 1
@@ -360,8 +353,10 @@ class ComplexityRegularizedEnsembler(Ensembler):
   def _select_mixture_weight_initializer(self, num_subnetworks):
     if self._mixture_weight_initializer:
       return self._mixture_weight_initializer
-    if (self._mixture_weight_type == MixtureWeightType.SCALAR or
-        self._mixture_weight_type == MixtureWeightType.VECTOR):
+    if self._mixture_weight_type in [
+        MixtureWeightType.SCALAR,
+        MixtureWeightType.VECTOR,
+    ]:
       return tf_compat.v1.constant_initializer(1. / num_subnetworks)
     return tf_compat.v1.zeros_initializer()
 
@@ -424,8 +419,7 @@ class ComplexityRegularizedEnsembler(Ensembler):
       if self._mixture_weight_type == MixtureWeightType.MATRIX:
         weight_shape = [last_layer_size, logits_size]
 
-    with tf_compat.v1.variable_scope(
-        "logits_{}".format(index) if index else "logits"):
+    with tf_compat.v1.variable_scope(f"logits_{index}" if index else "logits"):
       weight = tf_compat.v1.get_variable(
           name="mixture_weight",
           shape=weight_shape,
@@ -478,11 +472,12 @@ class ComplexityRegularizedEnsembler(Ensembler):
     if not isinstance(weighted_subnetworks[0].subnetwork.logits, dict):
       return self._create_bias_term_helper(weighted_subnetworks, prior,
                                            previous_iteration_checkpoint)
-    bias_terms = {}
-    for i, key in enumerate(sorted(weighted_subnetworks[0].subnetwork.logits)):
-      bias_terms[key] = self._create_bias_term_helper(
-          weighted_subnetworks, prior, previous_iteration_checkpoint, key, i)
-    return bias_terms
+    return {
+        key: self._create_bias_term_helper(weighted_subnetworks, prior,
+                                           previous_iteration_checkpoint, key, i)
+        for i, key in enumerate(sorted(
+            weighted_subnetworks[0].subnetwork.logits))
+    }
 
   def _create_bias_term_helper(self,
                                weighted_subnetworks,
@@ -510,10 +505,11 @@ class ComplexityRegularizedEnsembler(Ensembler):
       prior = self._load_variable(
           _lookup_if_dict(prior, key), previous_iteration_checkpoint)
     return tf_compat.v1.get_variable(
-        name="bias_{}".format(index) if index else "bias",
+        name=f"bias_{index}" if index else "bias",
         shape=shape,
         initializer=prior,
-        trainable=self._use_bias)
+        trainable=self._use_bias,
+    )
 
   def _create_ensemble_logits(self, weighted_subnetworks, bias, summary):
     """Computes the AdaNet weighted ensemble logits.
@@ -550,11 +546,11 @@ class ComplexityRegularizedEnsembler(Ensembler):
                                      index=None):
     """Returns the AdaNet ensemble logits and regularization term for key."""
 
-    subnetwork_logits = []
-    for weighted_subnetwork in weighted_subnetworks:
-      subnetwork_logits.append(_lookup_if_dict(weighted_subnetwork.logits, key))
-    with tf_compat.v1.variable_scope(
-        "logits_{}".format(index) if index else "logits"):
+    subnetwork_logits = [
+        _lookup_if_dict(weighted_subnetwork.logits, key)
+        for weighted_subnetwork in weighted_subnetworks
+    ]
+    with tf_compat.v1.variable_scope(f"logits_{index}" if index else "logits"):
       ensemble_logits = _lookup_if_dict(bias, key)
       for logits in subnetwork_logits:
         ensemble_logits = tf.add(ensemble_logits, logits)
@@ -580,18 +576,18 @@ class ComplexityRegularizedEnsembler(Ensembler):
 
     with summary.current_scope():
       # Append a suffix for multi head summaries.
-      suffix = "_{}".format(_stringify(key)) if key else ""
+      suffix = f"_{_stringify(key)}" if key else ""
       summary.scalar(
-          "complexity_regularization/adanet/adanet_weighted_ensemble" + suffix,
-          ensemble_complexity_regularization)
+          f"complexity_regularization/adanet/adanet_weighted_ensemble{suffix}",
+          ensemble_complexity_regularization,
+      )
       summary.histogram(
-          "mixture_weights/adanet/adanet_weighted_ensemble" + suffix, weights)
+          f"mixture_weights/adanet/adanet_weighted_ensemble{suffix}", weights)
       for iteration, weight in enumerate(weights):
-        scope = "adanet/adanet_weighted_ensemble/subnetwork{}_{}".format(
-            suffix, iteration)
-        summary.scalar("mixture_weight_norms/{}".format(scope), weight)
+        scope = f"adanet/adanet_weighted_ensemble/subnetwork{suffix}_{iteration}"
+        summary.scalar(f"mixture_weight_norms/{scope}", weight)
         fraction = weight / total_weight_l1_norms
-        summary.scalar("mixture_weight_fractions/{}".format(scope), fraction)
+        summary.scalar(f"mixture_weight_fractions/{scope}", fraction)
     return ensemble_complexity_regularization
 
   def _compute_complexity_regularization_helper(self, weight_l1_norm,

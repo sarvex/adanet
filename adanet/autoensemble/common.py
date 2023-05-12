@@ -211,8 +211,8 @@ def _convert_to_subestimator(candidate):
                 (estimator_lib.Estimator, estimator_lib.EstimatorV2)):
     return lambda config: AutoEnsembleSubestimator(candidate)
   raise ValueError(
-      "subestimator in candidate_pool must have type tf.estimator.Estimator or "
-      "adanet.AutoEnsembleSubestimator but got {}".format(candidate.__class__))
+      f"subestimator in candidate_pool must have type tf.estimator.Estimator or adanet.AutoEnsembleSubestimator but got {candidate.__class__}"
+  )
 
 
 class _GeneratorFromCandidatePool(subnetwork_lib.Generator):
@@ -232,14 +232,14 @@ class _GeneratorFromCandidatePool(subnetwork_lib.Generator):
     candidate_pool = self._maybe_call_candidate_pool(config, iteration_number)
 
     if isinstance(candidate_pool, dict):
-      for name in sorted(candidate_pool):
-        builders.append(
-            _BuilderFromSubestimator(
-                name,
-                _convert_to_subestimator(candidate_pool[name]),
-                logits_fn=self._logits_fn,
-                last_layer_fn=self._last_layer_fn,
-                config=config))
+      builders.extend(
+          _BuilderFromSubestimator(
+              name,
+              _convert_to_subestimator(candidate_pool[name]),
+              logits_fn=self._logits_fn,
+              last_layer_fn=self._last_layer_fn,
+              config=config,
+          ) for name in sorted(candidate_pool))
       return builders
 
     for i, estimator in enumerate(candidate_pool):

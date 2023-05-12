@@ -1041,7 +1041,7 @@ class IterationExportOutputsTest(tu.AdanetTestCase):
               self.evaluate(
                   iteration.estimator_spec.export_outputs[key].outputs))
           continue
-        self.fail("Invalid export_output for {}.".format(key))
+        self.fail(f"Invalid export_output for {key}.")
 
 
 if __name__ == "__main__":

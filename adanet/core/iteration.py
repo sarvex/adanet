@@ -69,7 +69,7 @@ class _TrainManager(object):
         spec.name: not self._is_done_training(spec)
         for spec in subnetwork_specs + ensemble_specs
     }
-    self._ensemble_specs = set([e.name for e in ensemble_specs])
+    self._ensemble_specs = {e.name for e in ensemble_specs}
 
     self._is_chief = is_chief
 
@@ -86,7 +86,7 @@ class _TrainManager(object):
   def _filename_for(self, spec):
     """Returns the filename to identify the spec."""
 
-    return os.path.join(self._train_manager_dir, "{}.json".format(spec.name))
+    return os.path.join(self._train_manager_dir, f"{spec.name}.json")
 
   def request_stop(self, spec, message):
     """Registers that given spec should no longer train."""
@@ -199,7 +199,7 @@ class _TrainingLimitHook(tf_compat.SessionRunHook):
       logging.info("Now stopping '%s' training after %d steps", self._spec.name,
                    step_value)
       self._train_manager.request_stop(
-          self._spec, "Training complete after {} steps.".format(step_value))
+          self._spec, f"Training complete after {step_value} steps.")
 
   def _should_stop(self, step):
     return self._max_steps is not None and step >= self._max_steps
@@ -280,8 +280,7 @@ class _TrainingHookRunnerHook(tf_compat.SessionRunHook):
     except (tf.errors.OutOfRangeError, StopIteration) as e:
       logging.info("Now stopping '%s' training after hitting end of input",
                    self._spec.name)
-      self._train_manager.request_stop(self._spec,
-                                       "OutOfRangeError: {}".format(e))
+      self._train_manager.request_stop(self._spec, f"OutOfRangeError: {e}")
 
   def after_create_session(self, session, coord):
     with self._session_run_context():
@@ -490,14 +489,14 @@ class _IterationBuilder(object):
         continue
       logging.info("DEBUG: Checking numerics of float feature '%s'.", name)
       checked_features[name] = tf.debugging.check_numerics(
-          features[name], "features '{}'".format(name))
+          features[name], f"features '{name}'")
     if isinstance(labels, dict):
       for name in sorted(labels):
         if not _is_numeric(labels[name]):
           continue
         logging.info("DEBUG: Checking numerics of float label '%s'.", name)
-        checked_labels[name] = tf.debugging.check_numerics(
-            labels[name], "labels '{}'".format(name))
+        checked_labels[name] = tf.debugging.check_numerics(labels[name],
+                                                           f"labels '{name}'")
     elif labels is not None and _is_numeric(labels):
       logging.info("DEBUG: Checking numerics of labels.")
       checked_labels = tf.debugging.check_numerics(labels, "'labels'")

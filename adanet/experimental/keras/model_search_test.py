@@ -199,16 +199,20 @@ class ModelSearchTest(parameterized.TestCase, tf.test.TestCase):
                     max_trials=3,
                     executions_per_trial=1,
                     directory=self.test_subdirectory,
-                    project_name='helloworld_' + str(int(time.time())),
-                    overwrite=True)),
+                    project_name=f'helloworld_{int(time.time())}',
+                    overwrite=True,
+                )),
             lambda: AutoEnsemblePhase(
                 ensemblers=[
                     MeanEnsembler('sparse_categorical_crossentropy', 'adam',
                                   ['accuracy'])
                 ],
                 ensemble_strategies=[GrowStrategy()],
-                storage=autoensemble_storage)
-        ], repetitions=3)
+                storage=autoensemble_storage,
+            ),
+        ],
+        repetitions=3,
+    )
     # pylint: enable=g-long-lambda
 
     controller = SequentialController(phases=[input_phase, repeat_phase])

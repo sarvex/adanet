@@ -85,7 +85,7 @@ class Builder(object):
           hparams=hparams,
           seed=seed)
     else:
-      raise ValueError("Invalid generator: `%s`" % hparams.generator)
+      raise ValueError(f"Invalid generator: `{hparams.generator}`")
 
     evaluator = None
     if hparams.use_evaluator:

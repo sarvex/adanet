@@ -125,10 +125,7 @@ class _SimpleDNNBuilder(adanet.subnetwork.Builder):
   def name(self):
     """See `adanet.subnetwork.Builder`."""
 
-    if self._num_layers == 0:
-      # A DNN with no hidden layers is a linear model.
-      return "linear"
-    return "{}_layer_dnn".format(self._num_layers)
+    return "linear" if self._num_layers == 0 else f"{self._num_layers}_layer_dnn"
 
 
 class Generator(adanet.subnetwork.Generator):

@@ -203,10 +203,10 @@ def _strip_scope(name, scope, additional_scope):
   """Returns the name with scope stripped from it."""
 
   if additional_scope:
-    name = name.replace("{}/".format(additional_scope), "")
+    name = name.replace(f"{additional_scope}/", "")
   if not scope:
     scope = _DEFAULT_SCOPE
-  name = name.replace("{}/".format(scope), "", 1)
+  name = name.replace(f"{scope}/", "", 1)
   return name
 
 
@@ -482,13 +482,13 @@ class _ScopedSummaryV2(Summary):
     # TF 2.
     @contextlib.contextmanager
     def monkey_patched_summary_scope_fn(name,
-                                        default_name="summary",
-                                        values=None):
+                                          default_name="summary",
+                                          values=None):
       """Rescopes the summary tag with the ScopedSummary's scope."""
 
       name = name or default_name
       current_scope = tf_compat.v1.get_default_graph().get_name_scope()
-      tag = current_scope + "/" + name if current_scope else name
+      tag = f"{current_scope}/{name}" if current_scope else name
       # Strip illegal characters from the scope name, and if that leaves
       # nothing, use None instead so we pick up the default name.
       name = _INVALID_SCOPE_CHARACTERS.sub("", name) or None
@@ -541,7 +541,7 @@ class _ScopedSummaryV2(Summary):
     # e.g. "foo/bar/baz"
     name_scope = tf_compat.v1.get_default_graph().get_name_scope()
     # Reuse name_scope if it exists by appending "/" to it.
-    name_scope = name_scope + "/" if name_scope else name_scope
+    name_scope = f"{name_scope}/" if name_scope else name_scope
 
     def _summary_fn(tensor, step):
       """Creates a summary with the given `Tensor`."""
@@ -939,14 +939,11 @@ def monkey_patched_summaries(summary):
     yield
   finally:
     # Revert monkey-patches.
-    try:
+    with contextlib.suppress(AttributeError, ImportError):
       setattr(tf_v1.contrib.summary, "audio", old_summary_v2_audio)
       setattr(tf_v1.contrib.summary, "histogram", old_summary_v2_histogram)
       setattr(tf_v1.contrib.summary, "image", old_summary_v2_image)
       setattr(tf_v1.contrib.summary, "scalar", old_summary_v2_scalar)
-    except (AttributeError, ImportError):
-      # TF 2.0 eliminates tf.contrib.
-      pass
     setattr(summary_v2_lib, "audio", old_summary_v2_audio)
     setattr(summary_v2_lib, "histogram", old_summary_v2_histogram)
     setattr(summary_v2_lib, "image", old_summary_v2_image)

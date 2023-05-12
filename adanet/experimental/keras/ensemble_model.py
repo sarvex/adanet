@@ -57,9 +57,7 @@ class MeanEnsemble(EnsembleModel):
     if len(self._submodels) == 1:
       return self._submodels[0](inputs)
 
-    submodel_outputs = []
-    for submodel in self._submodels:
-      submodel_outputs.append(submodel(inputs))
+    submodel_outputs = [submodel(inputs) for submodel in self._submodels]
     return tf.keras.layers.average(submodel_outputs)
 
 
@@ -80,7 +78,5 @@ class WeightedEnsemble(EnsembleModel):
     self.dense = tf.keras.layers.Dense(units=output_units)
 
   def call(self, inputs):
-    submodel_outputs = []
-    for submodel in self.submodels:
-      submodel_outputs.append(submodel(inputs))
+    submodel_outputs = [submodel(inputs) for submodel in self.submodels]
     return self.dense(tf.stack(submodel_outputs))

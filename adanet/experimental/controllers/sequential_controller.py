@@ -38,8 +38,7 @@ class SequentialController(Controller):
   def work_units(self) -> Iterator[WorkUnit]:
     previous_phase = None
     for phase in self._phases:
-      for work_unit in phase.work_units(previous_phase):
-        yield work_unit
+      yield from phase.work_units(previous_phase)
       previous_phase = phase
 
   def get_best_models(self, num_models: int) -> Sequence[tf.keras.Model]:

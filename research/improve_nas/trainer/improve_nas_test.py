@@ -166,7 +166,7 @@ class ImproveNasBuilderTest(parameterized.TestCase, tf.test.TestCase):
       "want_name": "NasNet_A_1.0_96_born_again_cifar",
   })
   def test_build_subnetwork(self, builder_params, want_name):
-    with tf.Graph().as_default() as g, self.test_session(graph=g) as sess:
+    with (tf.Graph().as_default() as g, self.test_session(graph=g) as sess):
       data = np.concatenate([
           np.ones((1, _IMAGE_DIM, _IMAGE_DIM, 1)), 2. * np.ones(
               (1, _IMAGE_DIM, _IMAGE_DIM, 1))
@@ -180,14 +180,14 @@ class ImproveNasBuilderTest(parameterized.TestCase, tf.test.TestCase):
       ensemble = None
       name = None
       subnetwork = None
-      builders = []
-      for builder_param in builder_params:
-        builders.append(
-            _builder(checkpoint_dir=self.test_subdirectory, **builder_param))
+      builders = [
+          _builder(checkpoint_dir=self.test_subdirectory, **builder_param)
+          for builder_param in builder_params
+      ]
       for idx, builder in enumerate(builders):
         name = builder.name
         # Pass the subnetworks of previous builders to the next builder.
-        with tf.variable_scope("subnetwork_{}".format(idx)):
+        with tf.variable_scope(f"subnetwork_{idx}"):
           subnetwork = builder.build_subnetwork(
               features=features,
               logits_dimension=head.logits_dimension,

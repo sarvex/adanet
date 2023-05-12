@@ -76,7 +76,6 @@ class FakeImageProvider(object):
     return input_fn
 
   def get_feature_columns(self):
-    feature_columns = [
+    return [
         tf.feature_column.numeric_column(key="x", shape=self._shape()),
     ]
-    return feature_columns

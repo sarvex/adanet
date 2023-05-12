@@ -35,18 +35,18 @@ import tensorflow.compat.v2 as tf
 def _json_report_to_materialized_report(iteration_report_json):
   """Converts a JSON loaded iteration report to a `MaterializedReport` list."""
 
-  subnetwork_reports = []
-  for subnetwork_report_json in iteration_report_json["subnetwork_reports"]:
-    subnetwork_reports.append(
-        subnetwork.MaterializedReport(
-            iteration_number=int(iteration_report_json["iteration_number"]),
-            name=subnetwork_report_json["name"],
-            hparams=subnetwork_report_json["hparams"],
-            attributes=subnetwork_report_json["attributes"],
-            metrics=subnetwork_report_json["metrics"],
-            included_in_final_ensemble=subnetwork_report_json[
-                "included_in_final_ensemble"]))
-  return subnetwork_reports
+  return [
+      subnetwork.MaterializedReport(
+          iteration_number=int(iteration_report_json["iteration_number"]),
+          name=subnetwork_report_json["name"],
+          hparams=subnetwork_report_json["hparams"],
+          attributes=subnetwork_report_json["attributes"],
+          metrics=subnetwork_report_json["metrics"],
+          included_in_final_ensemble=subnetwork_report_json[
+              "included_in_final_ensemble"],
+      )
+      for subnetwork_report_json in iteration_report_json["subnetwork_reports"]
+  ]
 
 
 def _validate_report_dict(dictionary):
@@ -58,17 +58,14 @@ def _validate_report_dict(dictionary):
     if isinstance(value, np.float):
       dictionary[key] = float(value)
     if isinstance(value, (six.string_types, six.binary_type)):
-      if six.PY2:
-        if not isinstance(value, six.text_type):
-          dictionary[key] = six.u(value).encode("utf-8")
+      if six.PY2 and not isinstance(value, six.text_type):
+        dictionary[key] = six.u(value).encode("utf-8")
       if six.PY3:
         dictionary[key] = str(dictionary[key])
     elif not isinstance(value, (bool, six.text_type, int, float)):
-      raise ValueError("Values must be a binary type "
-                       "(str in python 2; bytes in python 3), "
-                       "a text type (unicode in python 2; str in python 3), "
-                       "int, bool, or float, but its type is {}.".format(
-                           type(value)))
+      raise ValueError(
+          f"Values must be a binary type (str in python 2; bytes in python 3), a text type (unicode in python 2; str in python 3), int, bool, or float, but its type is {type(value)}."
+      )
   return dictionary
 
 

@@ -129,9 +129,7 @@ def metric_op(metric):
 
   if not isinstance(metric, tf.keras.metrics.Metric):
     return metric
-  vars_to_add = {}
-  for var in metric.variables:
-    vars_to_add[_hashable_var_key(var)] = var
+  vars_to_add = {_hashable_var_key(var): var for var in metric.variables}
   metric = (metric.result(), metric.updates[0])
   _update_variable_collection(v1.GraphKeys.LOCAL_VARIABLES, vars_to_add)
   _update_variable_collection(v1.GraphKeys.METRIC_VARIABLES, vars_to_add)
@@ -146,16 +144,15 @@ def _hashable_var_key(var):
   # tensor.experimental_ref() as the key". For a related issue, see:
   # https://github.com/tensorflow/tensorflow/issues/32139
   ref_op = getattr(var, "experimental_ref", None)
-  if callable(ref_op):
-    return ref_op()
-  return var
+  return ref_op() if callable(ref_op) else var
 
 
 def _update_variable_collection(collection_name, vars_to_add):
   """Add variables to collection."""
-  collection = {}
-  for var in v1.get_collection(collection_name):
-    collection[_hashable_var_key(var)] = var
+  collection = {
+      _hashable_var_key(var): var
+      for var in v1.get_collection(collection_name)
+  }
   # Skip variables that are in the collection already: O(n) runtime.
   for var_ref in vars_to_add:
     if var_ref in collection:

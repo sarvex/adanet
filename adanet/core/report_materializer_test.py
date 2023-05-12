@@ -35,9 +35,7 @@ from tensorflow.python.framework import test_util
 def decode(param):
   """Decodes the given param when it is bytes."""
 
-  if isinstance(param, (float, int)):
-    return param
-  return param.decode("utf-8")
+  return param if isinstance(param, (float, int)) else param.decode("utf-8")
 
 
 class ReportMaterializerTest(parameterized.TestCase, tf.test.TestCase):

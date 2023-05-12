@@ -58,9 +58,9 @@ class ScopedSummaryV2Test(tu.AdanetTestCase):
     summary_ops = []
     writer = tf.summary.create_file_writer(summary.logdir)
     with writer.as_default():
-      for summary_fn, tensor in summary.summary_tuples():
-        summary_ops.append(summary_fn(tensor, step=10))
-
+      summary_ops.extend(
+          summary_fn(tensor, step=10)
+          for summary_fn, tensor in summary.summary_tuples())
     writer_flush = writer.flush()
     self.evaluate([tf.compat.v1.global_variables_initializer(), writer.init()])
     self.evaluate(summary_ops)

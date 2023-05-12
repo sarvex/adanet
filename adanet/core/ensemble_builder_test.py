@@ -149,9 +149,7 @@ class _BuilderPrunerLeaveOne(_Builder):
   """Removed previous ensemble completely."""
 
   def prune_previous_ensemble(self, previous_ensemble):
-    if previous_ensemble:
-      return [0]
-    return []
+    return [0] if previous_ensemble else []
 
 
 class _FakeSummary(Summary):
@@ -454,7 +452,7 @@ class EnsembleBuilderTest(tu.AdanetTestCase):
             "use_bias": use_bias
         })
       if ensembler_class is MeanEnsembler:
-        ensembler_kwargs.update({"add_mean_last_layer_predictions": True})
+        ensembler_kwargs["add_mean_last_layer_predictions"] = True
       ensemble_spec = builder.build_ensemble_spec(
           # Note: when ensemble_spec is not None and warm_start_mixture_weights
           # is True, we need to make sure that the bias and mixture weights are
@@ -633,9 +631,7 @@ class EnsembleBuilderMetricFnTest(parameterized.TestCase, tf.test.TestCase):
           previous_iteration_checkpoint=None)
       subnetwork_metric_ops = subnetwork_spec.eval_metrics.eval_metrics_ops()
       ensemble_metric_ops = ensemble_spec.eval_metrics.eval_metrics_ops()
-      evaluate = self.evaluate
-      if sess is not None:
-        evaluate = sess.run
+      evaluate = sess.run if sess is not None else self.evaluate
       evaluate((tf_compat.v1.global_variables_initializer(),
                 tf_compat.v1.local_variables_initializer()))
       evaluate((subnetwork_metric_ops, ensemble_metric_ops))

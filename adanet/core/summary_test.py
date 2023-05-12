@@ -171,7 +171,7 @@ class ScopedSummaryTest(parameterized.TestCase, tf.test.TestCase):
     values = summary.value
     self.assertLen(values, 3)
     tags = sorted(v.tag for v in values)
-    expected = sorted("outer/inner/image/{}".format(i) for i in range(3))
+    expected = sorted(f"outer/inner/image/{i}" for i in range(3))
     self.assertEqual(tags, expected)
 
   @parameterized.named_parameters(
@@ -195,8 +195,7 @@ class ScopedSummaryTest(parameterized.TestCase, tf.test.TestCase):
     values = summary.value
     self.assertLen(values, 3)
     tags = sorted(v.tag for v in values)
-    expected = sorted(
-        "family/outer/family/inner/image/{}".format(i) for i in range(3))
+    expected = sorted(f"family/outer/family/inner/image/{i}" for i in range(3))
     self.assertEqual(tags, expected)
 
   @parameterized.named_parameters(
@@ -276,7 +275,7 @@ class ScopedSummaryTest(parameterized.TestCase, tf.test.TestCase):
     values = summary.value
     self.assertLen(values, 3)
     tags = sorted(v.tag for v in values)
-    expected = sorted("outer/inner/audio/{}".format(i) for i in range(3))
+    expected = sorted(f"outer/inner/audio/{i}" for i in range(3))
     self.assertEqual(tags, expected)
 
   @parameterized.named_parameters(
@@ -301,8 +300,7 @@ class ScopedSummaryTest(parameterized.TestCase, tf.test.TestCase):
     values = summary.value
     self.assertLen(values, 3)
     tags = sorted(v.tag for v in values)
-    expected = sorted(
-        "family/outer/family/inner/audio/{}".format(i) for i in range(3))
+    expected = sorted(f"family/outer/family/inner/audio/{i}" for i in range(3))
     self.assertEqual(tags, expected)
 
   @parameterized.named_parameters(
@@ -417,10 +415,10 @@ class TPUScopedSummaryTest(tu.AdanetTestCase):
   def write_summaries(self, summary):
     summary_ops = []
     writer = summary_ops_v2.create_file_writer(summary.logdir)
-    with writer.as_default(), summary_ops_v2.always_record_summaries():
-      for summary_fn, tensor in summary.summary_tuples():
-        summary_ops.append(summary_fn(tensor, step=10))
-
+    with (writer.as_default(), summary_ops_v2.always_record_summaries()):
+      summary_ops.extend(
+          summary_fn(tensor, step=10)
+          for summary_fn, tensor in summary.summary_tuples())
     with self.test_session() as sess:
       sess.run(tf.global_variables_initializer())
       sess.run(summary_ops_v2.summary_writer_initializer_op())
@@ -545,7 +543,7 @@ class TPUScopedSummaryTest(tu.AdanetTestCase):
     values = events[0].summary.value
     self.assertLen(values, 3)
     tags = sorted(v.tag for v in values)
-    expected = sorted("outer/inner/image/{}".format(i) for i in range(3))
+    expected = sorted(f"outer/inner/image/{i}" for i in range(3))
     self.assertEqual(tags, expected)
 
   @parameterized.named_parameters(
@@ -567,8 +565,7 @@ class TPUScopedSummaryTest(tu.AdanetTestCase):
     values = events[0].summary.value
     self.assertLen(values, 3)
     tags = sorted(v.tag for v in values)
-    expected = sorted(
-        "family/outer/family/inner/image/{}".format(i) for i in range(3))
+    expected = sorted(f"family/outer/family/inner/image/{i}" for i in range(3))
     self.assertEqual(tags, expected)
 
   @parameterized.named_parameters(
@@ -644,7 +641,7 @@ class TPUScopedSummaryTest(tu.AdanetTestCase):
     values = events[0].summary.value
     self.assertLen(values, 3)
     tags = sorted(v.tag for v in values)
-    expected = sorted("outer/inner/audio/{}".format(i) for i in range(3))
+    expected = sorted(f"outer/inner/audio/{i}" for i in range(3))
     self.assertEqual(tags, expected)
 
   @parameterized.named_parameters(
@@ -666,8 +663,7 @@ class TPUScopedSummaryTest(tu.AdanetTestCase):
     values = events[0].summary.value
     self.assertLen(values, 3)
     tags = sorted(v.tag for v in values)
-    expected = sorted(
-        "family/outer/family/inner/audio/{}".format(i) for i in range(3))
+    expected = sorted(f"family/outer/family/inner/audio/{i}" for i in range(3))
     self.assertEqual(tags, expected)
 
   @parameterized.named_parameters(

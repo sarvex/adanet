@@ -112,11 +112,7 @@ def make_run_config():
 
   # An error is thrown by absl.flags if train.sh passes tf_random_seed=None, so
   # it passes -1 instead.
-  if FLAGS.tf_random_seed == -1:
-    tf_random_seed = None
-  else:
-    tf_random_seed = FLAGS.tf_random_seed
-
+  tf_random_seed = None if FLAGS.tf_random_seed == -1 else FLAGS.tf_random_seed
   return tf.estimator.RunConfig(
       save_summary_steps=FLAGS.save_summary_steps,
       model_dir=FLAGS.model_dir,

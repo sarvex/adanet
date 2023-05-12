@@ -116,14 +116,11 @@ class EvaluatorTest(parameterized.TestCase, tf.test.TestCase):
       input_fn = tu.dummy_input_fn([[1., 2]], [[3.]])
       _, labels = input_fn()
       predictions = [labels * 2, labels * 3]
-      metrics = []
-      for preds in predictions:
-        metrics.append({
-            "mse": tf_compat.v1.metrics.mean_squared_error(labels, preds),
-            "other_metric_1": (tf.constant(1), tf.constant(1)),
-            "other_metric_2": (tf.constant(2), tf.constant(2))
-        })
-
+      metrics = [{
+          "mse": tf_compat.v1.metrics.mean_squared_error(labels, preds),
+          "other_metric_1": (tf.constant(1), tf.constant(1)),
+          "other_metric_2": (tf.constant(2), tf.constant(2)),
+      } for preds in predictions]
       with self.test_session() as sess:
         evaluator = Evaluator(input_fn=input_fn, metric_name="mse", steps=3)
         metrics = evaluator.evaluate(sess, ensemble_metrics=metrics)
@@ -135,14 +132,11 @@ class EvaluatorTest(parameterized.TestCase, tf.test.TestCase):
       input_fn = tu.dummy_input_fn([[1., 2]], [[3.]])
       _, labels = input_fn()
       predictions = [labels * 2, labels * 3]
-      metrics = []
-      for preds in predictions:
-        metrics.append({
-            "mse": tf_compat.v1.metrics.mean_squared_error(labels, preds),
-            "other_metric_1": (tf.constant(1), tf.constant(1)),
-            "other_metric_2": (tf.constant(2), tf.constant(2))
-        })
-
+      metrics = [{
+          "mse": tf_compat.v1.metrics.mean_squared_error(labels, preds),
+          "other_metric_1": (tf.constant(1), tf.constant(1)),
+          "other_metric_2": (tf.constant(2), tf.constant(2)),
+      } for preds in predictions]
       with self.test_session() as sess:
         evaluator = Evaluator(input_fn=input_fn, metric_name="dne", steps=3)
         with self.assertRaises(KeyError):

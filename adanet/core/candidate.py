@@ -102,7 +102,7 @@ class _CandidateBuilder(object):
 
     from tensorflow.python.training import moving_averages  # pylint: disable=g-direct-tensorflow-import,g-import-not-at-top
 
-    candidate_scope = "candidate_{}".format(ensemble_spec.name)
+    candidate_scope = f"candidate_{ensemble_spec.name}"
 
     with tf_compat.v1.variable_scope(candidate_scope):
       adanet_loss = ensemble_spec.adanet_loss

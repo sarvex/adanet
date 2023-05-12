@@ -57,16 +57,15 @@ class Provider(object):
 
     if preprocess:
       image_height, image_width = self._shape()[:2]
-      if self._params.augmentation == PreprocessingType.BASIC:
-        image = image_processing.resize_and_normalize(image, image_height,
-                                                      image_width)
-        if training:
-          image = image_processing.basic_augmentation(image, image_height,
-                                                      image_width, self._seed)
-      else:
-        raise ValueError('Unsupported data augmentation type: `%s`' %
-                         self._params.augmentation)
+      if self._params.augmentation != PreprocessingType.BASIC:
+        raise ValueError(
+            f'Unsupported data augmentation type: `{self._params.augmentation}`')
 
+      image = image_processing.resize_and_normalize(image, image_height,
+                                                    image_width)
+      if training:
+        image = image_processing.basic_augmentation(image, image_height,
+                                                    image_width, self._seed)
       if training and self._params.cutout:
         # According to https://arxiv.org/abs/1708.04552, cutting out 16x16
         # works best.
@@ -99,11 +98,7 @@ class Provider(object):
 
     x = None
     y = None
-    if partition == 'train':
-      x, y = x_train, y_train
-    else:
-      x, y = x_test, y_test
-
+    x, y = (x_train, y_train) if partition == 'train' else (x_test, y_test)
     dataset = tf.data.Dataset.from_tensor_slices((x, y.astype(np.int32)))
     return dataset.cache()
 
@@ -157,7 +152,4 @@ class Provider(object):
 
   def get_feature_columns(self):
     """Returns feature columns."""
-    feature_columns = [
-        tf.feature_column.numeric_column(key=FEATURES, shape=self._shape())
-    ]
-    return feature_columns
+    return [tf.feature_column.numeric_column(key=FEATURES, shape=self._shape())]

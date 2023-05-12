@@ -32,7 +32,7 @@ def _validate_nested_persisted_tensors(persisted_tensors):
     if not isinstance(entry, dict):
       continue
     if not entry:
-      raise ValueError("Got empty nested dictionary for key: '{}'".format(key))
+      raise ValueError(f"Got empty nested dictionary for key: '{key}'")
     _validate_nested_persisted_tensors(entry)
 
 

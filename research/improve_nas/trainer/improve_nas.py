@@ -109,8 +109,8 @@ class Builder(adanet.subnetwork.Builder):
     """See `adanet.subnetwork.Builder`."""
 
     # Prepare the input.
-    assert len(self._feature_columns) == 1, "Got feature columns: {}".format(
-        self._feature_columns)
+    assert (len(self._feature_columns) == 1
+            ), f"Got feature columns: {self._feature_columns}"
     images = tf.to_float(features[self._feature_columns[0].name])
     self._name_scope = tf.get_default_graph().get_name_scope()
 
@@ -206,11 +206,10 @@ class Builder(adanet.subnetwork.Builder):
   @property
   def name(self):
     """Returns this subnetwork's name."""
-    name = "NasNet_A_{}_{}".format(self._hparams.num_cells / 3,
-                                   self._hparams.num_conv_filters * 24)
+    name = f"NasNet_A_{self._hparams.num_cells / 3}_{self._hparams.num_conv_filters * 24}"
     if self._knowledge_distillation != KnowledgeDistillation.NONE:
-      name += "_" + self._knowledge_distillation
-    name += "_" + self._model_version
+      name += f"_{self._knowledge_distillation}"
+    name += f"_{self._model_version}"
     return name
 
 
@@ -323,16 +322,15 @@ class DynamicGenerator(adanet.subnetwork.Generator):
           subnetwork_utils.get_persisted_value_from_ensemble(
               previous_ensemble, _PREVIOUS_CONV_FILTERS))
 
-    candidates = [
-        self._builder_fn(
-            hparams=subnetwork_utils.copy_update(
-                self._hparams,
-                num_cells=num_cells + 3,
-                num_conv_filters=num_conv_filters)),
-        self._builder_fn(
-            hparams=subnetwork_utils.copy_update(
-                self._hparams,
-                num_cells=num_cells,
-                num_conv_filters=num_conv_filters + 10)),
+    return [
+        self._builder_fn(hparams=subnetwork_utils.copy_update(
+            self._hparams,
+            num_cells=num_cells + 3,
+            num_conv_filters=num_conv_filters,
+        )),
+        self._builder_fn(hparams=subnetwork_utils.copy_update(
+            self._hparams,
+            num_cells=num_cells,
+            num_conv_filters=num_conv_filters + 10,
+        )),
     ]
-    return candidates

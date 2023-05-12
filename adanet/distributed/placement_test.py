@@ -57,7 +57,7 @@ class ParameterServerConfig(object):
 
 
 def _testcase_name(name, drop_remainder):
-  return "{}{}".format(name, "_drop_remainder" if drop_remainder else "")
+  return f'{name}{"_drop_remainder" if drop_remainder else ""}'
 
 
 class RoundRobinStrategyTest(parameterized.TestCase, tf.test.TestCase):

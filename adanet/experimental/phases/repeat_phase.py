@@ -45,8 +45,7 @@ class RepeatPhase(DatasetProvider, ModelProvider):
       prev_phase = previous_phase
       for phase in self._phase_factory:
         phase = phase()
-        for work_unit in phase.work_units(prev_phase):
-          yield work_unit
+        yield from phase.work_units(prev_phase)
         prev_phase = phase
     self._final_phase = prev_phase
 

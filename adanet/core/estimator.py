@@ -197,8 +197,7 @@ class _EvalMetricSaverHook(tf_compat.SessionRunHook):
     Returns:
       A `str` representing the `dictionary`.
     """
-    return ", ".join(
-        "{} = {}".format(k, v) for k, v in sorted(dictionary.items()))
+    return ", ".join(f"{k} = {v}" for k, v in sorted(dictionary.items()))
 
   def end(self, session):
     """See `SessionRunHook`."""
@@ -220,7 +219,7 @@ class _EvalMetricSaverHook(tf_compat.SessionRunHook):
       elif isinstance(value, six.binary_type):
         summ = tf_compat.v1.summary.Summary.FromString(value)
         for i, _ in enumerate(summ.value):
-          summ.value[i].tag = "{}/{}".format(key, i)
+          summ.value[i].tag = f"{key}/{i}"
         summary_proto.value.extend(summ.value)
       else:
         logging.warn(
@@ -709,9 +708,9 @@ class Estimator(tf.estimator.Estimator):
           **kwargs)
 
     if default_ensembler_kwargs and ensemblers:
-      raise ValueError("When specifying the `ensemblers` argument, "
-                       "the following arguments must not be given: {}".format(
-                           default_ensembler_kwargs.keys()))
+      raise ValueError(
+          f"When specifying the `ensemblers` argument, the following arguments must not be given: {default_ensembler_kwargs.keys()}"
+      )
     if not ensemblers:
       default_ensembler_kwargs["model_dir"] = self.model_dir
       ensemblers = [
@@ -867,7 +866,7 @@ class Estimator(tf.estimator.Estimator):
     if (steps is not None) and (max_steps is not None):
       raise ValueError("Can not provide both steps and max_steps.")
     if steps is not None and steps <= 0:
-      raise ValueError("Must specify steps > 0, given: {}".format(steps))
+      raise ValueError(f"Must specify steps > 0, given: {steps}")
 
     latest_checkpoint = tf.train.latest_checkpoint(self.model_dir)
     latest_global_steps = self._checkpoint_global_step(latest_checkpoint)
@@ -1410,7 +1409,7 @@ class Estimator(tf.estimator.Estimator):
     """Returns the filename of the given iteration's frozen graph."""
 
     frozen_checkpoint = os.path.join(self.model_dir, "architecture")
-    return "{}-{}.json".format(frozen_checkpoint, iteration_number)
+    return f"{frozen_checkpoint}-{iteration_number}.json"
 
   def _get_best_ensemble_index(self,
                                current_iteration,
@@ -1694,28 +1693,26 @@ class Estimator(tf.estimator.Estimator):
 
     if training:
       return []
-    evaluation_hooks = []
-    for subnetwork_spec in current_iteration.subnetwork_specs:
-      evaluation_hooks.append(
-          self._create_eval_metric_saver_hook(
-              subnetwork_spec.eval_metrics,
-              subnetwork_spec.name,
-              kind="subnetwork",
-              evaluation_name=evaluation_name))
-    for candidate in current_iteration.candidates:
-      evaluation_hooks.append(
-          self._create_eval_metric_saver_hook(
-              candidate.ensemble_spec.eval_metrics,
-              candidate.ensemble_spec.name,
-              kind="ensemble",
-              evaluation_name=evaluation_name))
+    evaluation_hooks = [
+        self._create_eval_metric_saver_hook(
+            subnetwork_spec.eval_metrics,
+            subnetwork_spec.name,
+            kind="subnetwork",
+            evaluation_name=evaluation_name,
+        ) for subnetwork_spec in current_iteration.subnetwork_specs
+    ]
+    evaluation_hooks.extend(
+        self._create_eval_metric_saver_hook(
+            candidate.ensemble_spec.eval_metrics,
+            candidate.ensemble_spec.name,
+            kind="ensemble",
+            evaluation_name=evaluation_name,
+        ) for candidate in current_iteration.candidates)
     return evaluation_hooks
 
   def _create_eval_metric_saver_hook(self, eval_metrics, name, kind,
                                      evaluation_name):
-    eval_subdir = "eval"
-    if evaluation_name:
-      eval_subdir = "eval_{}".format(evaluation_name)
+    eval_subdir = f"eval_{evaluation_name}" if evaluation_name else "eval"
     return _EvalMetricSaverHook(
         name=name,
         kind=kind,
@@ -1777,9 +1774,8 @@ class Estimator(tf.estimator.Estimator):
       if ensemble_candidate.name == ensemble_candidate_name:
         return ensemble_candidate
     raise ValueError(
-        "Could not find a matching ensemble candidate with name '{}'. "
-        "Are you sure the `adanet.ensemble.Strategy` is deterministic?".format(
-            ensemble_candidate_name))
+        f"Could not find a matching ensemble candidate with name '{ensemble_candidate_name}'. Are you sure the `adanet.ensemble.Strategy` is deterministic?"
+    )
 
   # TODO: Refactor architecture building logic to its own module.
   def _architecture_ensemble_spec(self, architecture, iteration_number,
@@ -1840,8 +1836,8 @@ class Estimator(tf.estimator.Estimator):
       for name in names:
         if name not in subnetwork_builder_names:
           raise ValueError(
-              "Required subnetwork builder is missing for iteration {}: {}"
-              .format(iteration_number, name))
+              f"Required subnetwork builder is missing for iteration {iteration_number}: {name}"
+          )
         rebuild_subnetwork_builders.append(subnetwork_builder_names[name])
       previous_ensemble_summary = None
       previous_ensemble_subnetwork_builders = None
@@ -2068,12 +2064,14 @@ class Estimator(tf.estimator.Estimator):
           continue
         architecture = self._read_architecture(architecture_filename)
         logging.info(
-            "Importing architecture from %s: [%s].", architecture_filename,
+            "Importing architecture from %s: [%s].",
+            architecture_filename,
             ", ".join(
                 sorted([
-                    "'{}:{}'".format(t, n)
+                    f"'{t}:{n}'"
                     for t, n in architecture.subnetworks_grouped_by_iteration
-                ])))
+                ])),
+        )
         base_global_step = architecture.global_step
         previous_iteration = self._architecture_ensemble_spec(
             architecture, i, features, mode, labels, previous_ensemble_spec,

@@ -85,9 +85,7 @@ class MeanTest(parameterized.TestCase, tf.test.TestCase):
     with context.graph_mode():
       ensembler = ensemble.MeanEnsembler(
           add_mean_last_layer_predictions=add_mean_last_layer_predictions)
-      last_layer_dims = [3, 3]
-      if diff_last_layer_shapes:
-        last_layer_dims = [3, 5]
+      last_layer_dims = [3, 5] if diff_last_layer_shapes else [3, 3]
       if multi_head:
         subnetworks = [
             self._build_subnetwork(
@@ -148,7 +146,7 @@ class MeanTest(parameterized.TestCase, tf.test.TestCase):
                                  ], axis=0) for head_name in multi_head
           }
           expected_predictions = {
-              '{}_{}'.format(ensemble.MeanEnsemble.MEAN_LAST_LAYER, head_name):
+              f'{ensemble.MeanEnsemble.MEAN_LAST_LAYER}_{head_name}':
               np.mean([s[head_name] for s in last_layer], axis=0)
               for head_name in multi_head
           }

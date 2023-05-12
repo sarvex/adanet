@@ -68,14 +68,11 @@ class _FakeSummary(Summary):
 
 
 def _get_norm_summary_key(subnetwork_index):
-  return ('mixture_weight_norms/adanet/adanet_weighted_ensemble/subnetwork_%s' %
-          subnetwork_index)
+  return f'mixture_weight_norms/adanet/adanet_weighted_ensemble/subnetwork_{subnetwork_index}'
 
 
 def _get_fractions_summary_key(subnetwork_index):
-  return (
-      'mixture_weight_fractions/adanet/adanet_weighted_ensemble/subnetwork_%s' %
-      subnetwork_index)
+  return f'mixture_weight_fractions/adanet/adanet_weighted_ensemble/subnetwork_{subnetwork_index}'
 
 
 def _get_complexity_regularization_summary_key():
@@ -494,9 +491,7 @@ class ComplexityRegularizedEnsemblerTest(parameterized.TestCase,
                           expected_summary_scalars=None,
                           name=None):
     with context.graph_mode():
-      model_dir = None
-      if warm_start_mixture_weights:
-        model_dir = 'fake_checkpoint_dir'
+      model_dir = 'fake_checkpoint_dir' if warm_start_mixture_weights else None
       ensembler = ensemble.ComplexityRegularizedEnsembler(
           optimizer=self._optimizer,
           mixture_weight_type=mixture_weight_type,

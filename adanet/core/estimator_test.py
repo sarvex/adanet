@@ -345,9 +345,7 @@ class _WidthLimitingDNNBuilder(_DNNBuilder):
     indices = list(range(len(previous_ensemble.weighted_subnetworks)))
     if self._width_limit is None:
       return indices
-    if self._width_limit == 1:
-      return []
-    return indices[-self._width_limit + 1:]  # pylint: disable=invalid-unary-operand-type
+    return [] if self._width_limit == 1 else indices[-self._width_limit + 1:]
 
 
 class _FakeEvaluator(object):
@@ -1718,13 +1716,13 @@ def _check_eventfile_for_keyword(keyword, dir_):
   tf_compat.v1.summary.FileWriterCache.clear()
 
   if not tf.io.gfile.exists(dir_):
-    raise ValueError("Directory '{}' not found.".format(dir_))
+    raise ValueError(f"Directory '{dir_}' not found.")
 
   # Get last `Event` written.
   filenames = os.path.join(dir_, "events*")
   event_paths = tf.io.gfile.glob(filenames)
   if not event_paths:
-    raise ValueError("Path '{}' not found.".format(filenames))
+    raise ValueError(f"Path '{filenames}' not found.")
 
   for last_event in tf_compat.v1.train.summary_iterator(event_paths[-1]):
     if last_event.summary is not None:
@@ -1738,8 +1736,7 @@ def _check_eventfile_for_keyword(keyword, dir_):
           if value.HasField("tensor"):
             return value.tensor.string_val
 
-  raise ValueError("Keyword '{}' not found in path '{}'.".format(
-      keyword, filenames))
+  raise ValueError(f"Keyword '{keyword}' not found in path '{filenames}'.")
 
 
 class _FakeMetric(object):
@@ -1774,9 +1771,10 @@ class _EvalMetricsHead(object):
 
     metric_ops = None
     if self._fake_metrics:
-      metric_ops = {}
-      for k, fake_metric in self._fake_metrics.items():
-        metric_ops[k] = fake_metric.to_metric()
+      metric_ops = {
+          k: fake_metric.to_metric()
+          for k, fake_metric in self._fake_metrics.items()
+      }
     return tf.estimator.EstimatorSpec(
         mode=mode,
         predictions=logits,
@@ -2022,7 +2020,6 @@ class EstimatorSummaryWriterTest(tu.AdanetTestCase):
           "want_loss":
               -1.791,
       })
-  # pylint: enable=g-long-lambda
   def test_eval_metrics(
       self,
       head,
@@ -2070,7 +2067,8 @@ class EstimatorSummaryWriterTest(tu.AdanetTestCase):
     for metric in want_summaries:
       self.assertIsNotNone(
           _check_eventfile_for_keyword(metric, subnetwork_subdir),
-          msg="{} should be under 'eval'.".format(metric))
+          msg=f"{metric} should be under 'eval'.",
+      )
     for dir_ in [global_subdir, ensemble_subdir]:
       self.assertAlmostEqual(metrics["loss"],
                              _check_eventfile_for_keyword("loss", dir_))
@@ -2079,8 +2077,9 @@ class EstimatorSummaryWriterTest(tu.AdanetTestCase):
                            "architecture/adanet/ensembles/0", dir_))
       for metric in want_summaries:
         self.assertTrue(
-            _check_eventfile_for_keyword(metric, dir_) > 0.,
-            msg="{} should be under 'eval'.".format(metric))
+            _check_eventfile_for_keyword(metric, dir_) > 0.0,
+            msg=f"{metric} should be under 'eval'.",
+        )
 
 
 class EstimatorMembersOverrideTest(tu.AdanetTestCase):
@@ -2435,7 +2434,7 @@ class EstimatorReportTest(tu.AdanetTestCase):
 
     self.assertEqual(len(report_list1), len(report_list2))
 
-    for qualified_name in report_dict_1.keys():
+    for qualified_name in report_dict_1:
       report_1 = report_dict_1[qualified_name]
       report_2 = report_dict_2[qualified_name]
       self.assertEqual(

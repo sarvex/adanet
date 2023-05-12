@@ -71,9 +71,7 @@ class MeanEnsembler(Ensembler):
 
   @property
   def name(self):
-    if self._name:
-      return self._name
-    return 'mean'
+    return self._name if self._name else 'mean'
 
   def _assert_last_layer_compatible_shapes(self, tensors):
     if not tensors:
@@ -112,9 +110,9 @@ class MeanEnsembler(Ensembler):
         for key in subnetworks[0].logits:
           last_layers = [s.last_layer[key] for s in subnetworks]
           self._assert_last_layer_compatible_shapes(last_layers)
-          mean_last_layer['{}_{}'.format(MeanEnsemble.MEAN_LAST_LAYER,
-                                         key)] = tf.math.reduce_mean(
-                                             tf.stack(last_layers), axis=0)
+          mean_last_layer[
+              f'{MeanEnsemble.MEAN_LAST_LAYER}_{key}'] = tf.math.reduce_mean(
+                  tf.stack(last_layers), axis=0)
       else:
         last_layers = [subnetwork.last_layer for subnetwork in subnetworks]
         self._assert_last_layer_compatible_shapes(last_layers)

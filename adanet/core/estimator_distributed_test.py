@@ -61,15 +61,17 @@ def _create_task_process(task_type, task_index, estimator_type,
       tuple must be closed by the caller once the process ends.
   """
 
-  process_name = "%s_%s" % (task_type, task_index)
-  args = ["python", "adanet/core/estimator_distributed_test_runner.py"]
-  args.append("--estimator_type={}".format(estimator_type))
-  args.append("--placement_strategy={}".format(placement_strategy))
-  # Log everything to stderr.
-  args.append("--stderrthreshold=info")
-  args.append("--model_dir={}".format(model_dir))
+  process_name = f"{task_type}_{task_index}"
+  args = [
+      "python",
+      "adanet/core/estimator_distributed_test_runner.py",
+      f"--estimator_type={estimator_type}",
+      f"--placement_strategy={placement_strategy}",
+      "--stderrthreshold=info",
+      f"--model_dir={model_dir}",
+  ]
   logging.info("Spawning %s process: %s", process_name, " ".join(args))
-  stderr_filename = os.path.join(model_dir, "%s_stderr.txt" % process_name)
+  stderr_filename = os.path.join(model_dir, f"{process_name}_stderr.txt")
   logging.info("Logging to %s", model_dir)
   stderr_file = open(stderr_filename, "w+")
   tf_config = copy.deepcopy(tf_config)
@@ -183,100 +185,19 @@ class EstimatorDistributedTrainingTest(parameterized.TestCase,
         if ret_code is not None:
           logging.error("kill process %s ended with ret_code %d",
                         kill_process.name, ret_code)
-          log_all(kill_process, "ended with code {}".format(ret_code))
+          log_all(kill_process, f"ended with code {ret_code}")
           self.assertIsNone(ret_code)
       # Delay between polling loops.
       time.sleep(0.25)
     logging.info("All wait processes finished")
-    for i, kill_process in enumerate(kill_processes):
+    for kill_process in kill_processes:
       # Kill each kill process.
       kill_process.popen.kill()
       kill_process.popen.wait()
       log_all(kill_process, "killed")
 
   # pylint: disable=g-complex-comprehension
-  @parameterized.named_parameters(
-      itertools.chain(*[
-          [
-              {
-                  "testcase_name": "{}_one_worker".format(placement),
-                  "placement_strategy": placement,
-                  "num_workers": 1,
-                  "num_ps": 0,
-              },
-              {
-                  "testcase_name": "{}_one_worker_one_ps".format(placement),
-                  "placement_strategy": placement,
-                  "num_workers": 1,
-                  "num_ps": 1,
-              },
-              {
-                  "testcase_name": "{}_two_workers_one_ps".format(placement),
-                  "placement_strategy": placement,
-                  "num_workers": 2,
-                  "num_ps": 1,
-              },
-              {
-                  "testcase_name":
-                      "{}_three_workers_three_ps".format(placement),
-                  "placement_strategy":
-                      placement,
-                  "num_workers":
-                      3,
-                  "num_ps":
-                      3,
-              },
-              {
-                  "testcase_name": "{}_five_workers_three_ps".format(placement),
-                  "placement_strategy": placement,
-                  "num_workers": 5,
-                  "num_ps": 3,
-              },
-              {
-                  "testcase_name":
-                      "autoensemble_{}_five_workers_three_ps".format(placement),
-                  "estimator":
-                      "autoensemble",
-                  "placement_strategy":
-                      placement,
-                  "num_workers":
-                      5,
-                  "num_ps":
-                      3,
-              },
-              # TODO: Need to restore boosted trees support.
-              # {
-              #     "testcase_name":
-              #         "autoensemble_trees_multiclass_{}_five_workers_three_ps"
-              #         .format(placement),
-              #     "estimator":
-              #         "autoensemble_trees_multiclass",
-              #     "placement_strategy":
-              #         placement,
-              #     "num_workers":
-              #         5,
-              #     "num_ps":
-              #         3,
-              # },
-              {
-                  "testcase_name":
-                      "estimator_with_experimental_multiworker_{}_five_workers"
-                      .format(placement),
-                  "estimator":
-                      "estimator_with_experimental_multiworker_strategy",
-                  "placement_strategy":
-                      placement,
-                  "num_workers":
-                      5,
-                  # Multiworker strategy means that all workers hold a copy of
-                  # the variables, and there are no parameter servers.
-                  "num_ps":
-                      0,
-              },
-          ] for placement in ["replication", "round_robin"]
-      ]))
-  # pylint: enable=g-complex-comprehension
-  # TODO: Test distributed training in TF 2.
+  @parameterized.named_parameters(itertools.chain(*[[{"testcase_name": f"{placement}_one_worker", "placement_strategy": placement, "num_workers": 1, "num_ps": 0}, {"testcase_name": f"{placement}_one_worker_one_ps", "placement_strategy": placement, "num_workers": 1, "num_ps": 1}, {"testcase_name": f"{placement}_two_workers_one_ps", "placement_strategy": placement, "num_workers": 2, "num_ps": 1}, {"testcase_name": f"{placement}_three_workers_three_ps", "placement_strategy": placement, "num_workers": 3, "num_ps": 3}, {"testcase_name": f"{placement}_five_workers_three_ps", "placement_strategy": placement, "num_workers": 5, "num_ps": 3}, {"testcase_name": f"autoensemble_{placement}_five_workers_three_ps", "estimator": "autoensemble", "placement_strategy": placement, "num_workers": 5, "num_ps": 3}, {"testcase_name": f"estimator_with_experimental_multiworker_{placement}_five_workers", "estimator": "estimator_with_experimental_multiworker_strategy", "placement_strategy": placement, "num_workers": 5, "num_ps": 0}] for placement in ["replication", "round_robin"]]))
   @tf_compat.skip_for_tf2
   def test_distributed_training(self,
                                 num_workers,
@@ -288,8 +209,8 @@ class EstimatorDistributedTrainingTest(parameterized.TestCase,
     # Inspired by `tf.test.create_local_cluster`.
     worker_ports = [_pick_unused_port() for _ in range(num_workers)]
     ps_ports = [_pick_unused_port() for _ in range(num_ps)]
-    ws_targets = ["localhost:%s" % port for port in worker_ports]
-    ps_targets = ["localhost:%s" % port for port in ps_ports]
+    ws_targets = [f"localhost:{port}" for port in worker_ports]
+    ps_targets = [f"localhost:{port}" for port in ps_ports]
 
     # For details see:
     # https://www.tensorflow.org/api_docs/python/tf/estimator/train_and_evaluate
@@ -310,31 +231,25 @@ class EstimatorDistributedTrainingTest(parameterized.TestCase,
     if ps_targets:
       tf_config["cluster"]["ps"] = ps_targets
 
-    worker_processes = []
-    ps_processes = []
-    evaluator_processes = []
-
     model_dir = self.test_subdirectory
 
-    # Chief
-    worker_processes.append(
+    worker_processes = [
         _create_task_process("chief", 0, estimator, placement_strategy,
-                             tf_config, model_dir))
+                             tf_config, model_dir)
+    ]
     # Workers
-    for i in range(len(ws_targets[1:])):
-      worker_processes.append(
-          _create_task_process("worker", i, estimator, placement_strategy,
-                               tf_config, model_dir))
-    # Parameter Servers (PS)
-    for i in range(len(ps_targets)):
-      ps_processes.append(
-          _create_task_process("ps", i, estimator, placement_strategy,
-                               tf_config, model_dir))
-    # Evaluator
-    evaluator_processes.append(
+    worker_processes.extend(
+        _create_task_process("worker", i, estimator, placement_strategy,
+                             tf_config, model_dir)
+        for i in range(len(ws_targets[1:])))
+    ps_processes = [
+        _create_task_process("ps", i, estimator, placement_strategy, tf_config,
+                             model_dir) for i in range(len(ps_targets))
+    ]
+    evaluator_processes = [
         _create_task_process("evaluator", 0, estimator, placement_strategy,
-                             tf_config, model_dir))
-
+                             tf_config, model_dir)
+    ]
     # Run processes.
     try:
       # NOTE: Parameter servers do not shut down on their own.

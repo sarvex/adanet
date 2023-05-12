@@ -303,13 +303,13 @@ def check_eventfile_for_keyword(keyword, dir_):
   tf_compat.v1.summary.FileWriterCache.clear()
 
   if not tf.io.gfile.exists(dir_):
-    raise ValueError("Directory '{}' not found.".format(dir_))
+    raise ValueError(f"Directory '{dir_}' not found.")
 
   # Get last `Event` written.
   filenames = os.path.join(dir_, "events*")
   event_paths = tf.io.gfile.glob(filenames)
   if not event_paths:
-    raise ValueError("Path '{}' not found.".format(filenames))
+    raise ValueError(f"Path '{filenames}' not found.")
 
   for event_path in event_paths:
     for last_event in tf_compat.v1.train.summary_iterator(event_path):
@@ -330,8 +330,7 @@ def check_eventfile_for_keyword(keyword, dir_):
               if value.tensor.string_val is not None:
                 return value.tensor.string_val
 
-  raise ValueError("Keyword '{}' not found in path '{}'.".format(
-      keyword, filenames))
+  raise ValueError(f"Keyword '{keyword}' not found in path '{filenames}'.")
 
 
 def create_ensemble_metrics(metric_fn,
@@ -454,14 +453,15 @@ def create_iteration_metrics(subnetwork_metrics=None,
   candidates = []
   for i, metric in enumerate(ensemble_metrics):
     spec = _EnsembleSpec(
-        name="ensemble_{}".format(i),
+        name=f"ensemble_{i}",
         ensemble=None,
         architecture=None,
         subnetwork_builders=None,
         predictions=None,
         step=None,
         variables=None,
-        eval_metrics=metric)
+        eval_metrics=metric,
+    )
 
     candidate = _Candidate(
         ensemble_spec=spec, adanet_loss=tf.constant(i), variables=None)
@@ -470,7 +470,7 @@ def create_iteration_metrics(subnetwork_metrics=None,
   subnetwork_specs = []
   for i, metric in enumerate(subnetwork_metrics):
     spec = _SubnetworkSpec(
-        name="subnetwork_{}".format(i),
+        name=f"subnetwork_{i}",
         subnetwork=None,
         builder=None,
         predictions=None,
@@ -479,7 +479,8 @@ def create_iteration_metrics(subnetwork_metrics=None,
         train_op=None,
         asset_dir=None,
         eval_metrics=metric,
-        variables=None)
+        variables=None,
+    )
     subnetwork_specs.append(spec)
 
   return _IterationMetrics(

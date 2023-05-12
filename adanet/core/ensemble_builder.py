@@ -122,16 +122,14 @@ def _verify_metric_fn_args(metric_fn):
     return
   # Calling low level getargs for py_2_and_3 compatibility.
   args = set(inspect.getargs(metric_fn.__code__).args)
-  invalid_args = list(args - _VALID_METRIC_FN_ARGS)
-  if invalid_args:
-    raise ValueError("metric_fn (%s) has following not expected args: %s" %
-                     (metric_fn, invalid_args))
+  if invalid_args := list(args - _VALID_METRIC_FN_ARGS):
+    raise ValueError(
+        f"metric_fn ({metric_fn}) has following not expected args: {invalid_args}"
+    )
 
 
 def _get_value(target, key):
-  if isinstance(target, dict):
-    return target[key]
-  return target
+  return target[key] if isinstance(target, dict) else target
 
 
 def _to_train_op_spec(train_op):
@@ -336,7 +334,7 @@ class _EnsembleBuilder(object):
       An `_EnsembleSpec` instance.
     """
 
-    with tf_compat.v1.variable_scope("ensemble_{}".format(name)):
+    with tf_compat.v1.variable_scope(f"ensemble_{name}"):
       step = tf_compat.v1.get_variable(
           "step",
           shape=[],
@@ -440,10 +438,8 @@ class _EnsembleBuilder(object):
                 subnetwork_spec_map.items()
             }
             export_outputs.update({
-                "{}_{}".format(
-                    _EnsembleBuilder._SUBNETWORK_LOGITS_EXPORT_SIGNATURE,
-                    head_name):
-                    tf.estimator.export.PredictOutput(subnetwork_logits)
+                f"{_EnsembleBuilder._SUBNETWORK_LOGITS_EXPORT_SIGNATURE}_{head_name}":
+                tf.estimator.export.PredictOutput(subnetwork_logits)
             })
         else:
           subnetwork_logits = {
@@ -469,10 +465,8 @@ class _EnsembleBuilder(object):
                 subnetwork_name, subnetwork_spec in subnetwork_spec_map.items()
             }
             export_outputs.update({
-                "{}_{}".format(
-                    _EnsembleBuilder._SUBNETWORK_LAST_LAYER_EXPORT_SIGNATURE,
-                    head_name):
-                    tf.estimator.export.PredictOutput(subnetwork_last_layer)
+                f"{_EnsembleBuilder._SUBNETWORK_LAST_LAYER_EXPORT_SIGNATURE}_{head_name}":
+                tf.estimator.export.PredictOutput(subnetwork_last_layer)
             })
         else:
           subnetwork_last_layer = {
@@ -706,7 +700,7 @@ class _SubnetworkManager(object):
 
     old_vars = _get_current_vars()
 
-    with tf_compat.v1.variable_scope("subnetwork_{}".format(name)):
+    with tf_compat.v1.variable_scope(f"subnetwork_{name}"):
       step = tf_compat.v1.get_variable(
           "step",
           shape=[],

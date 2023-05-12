@@ -107,9 +107,8 @@ class _Architecture(object):
       if iteration_number not in subnet_by_iteration:
         subnet_by_iteration[iteration_number] = []
       subnet_by_iteration[iteration_number].append(builder_name)
-    return tuple([
-        (i, tuple(subnet_by_iteration[i])) for i in sorted(subnet_by_iteration)
-    ])
+    return tuple(
+        (i, tuple(subnet_by_iteration[i])) for i in sorted(subnet_by_iteration))
 
   def add_subnetwork(self, iteration_number, builder_name):
     """Adds the given subnetwork metadata.

@@ -39,10 +39,7 @@ class KerasTunerPhase(DatasetProvider, ModelProvider):
       **search_kwargs: Keyword arguments to pass to the tuner search method.
     """
 
-    if callable(tuner):
-      self._tuner = tuner()
-    else:
-      self._tuner = tuner
+    self._tuner = tuner() if callable(tuner) else tuner
     self._search_args = search_args
     self._search_kwargs = search_kwargs
 
